@@ -25,7 +25,7 @@ Hacker Life is a browser-based cybersecurity career simulator built with React a
 ## Installation
 
 ```bash
-git clone YOUR_REPOSITORY_URL
+git clone (https://github.com/Samidjon/Hacker-Life.git)
 cd hacker-life
 npm install
 npm run dev
