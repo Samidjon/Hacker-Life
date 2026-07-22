@@ -25,9 +25,12 @@ export interface Player {
 
   lastDailyRewardDate: string | null;
   loginStreak: number;
+
+  contractQuestionHistory: Record<string, string[]>;
 }
 
 export interface ContractChallenge {
+  id: string;
   scenario: string;
   question: string;
   options: string[];
@@ -46,7 +49,7 @@ export interface Contract {
   requiredLevel: number;
   difficulty: "Easy" | "Medium" | "Hard";
   category: string;
-  challenge: ContractChallenge;
+  challenges: ContractChallenge[];
 }
 
 export type UpgradeEffect =

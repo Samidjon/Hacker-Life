@@ -6,6 +6,7 @@ import { upgrades } from "../data/upgrades";
 
 import type {
   Contract,
+  ContractChallenge,
   DailyMission,
   DailyMissionProgress,
   Player,
@@ -41,6 +42,30 @@ function createDailyProgress(): DailyMissionProgress {
     creditsEarned: 0,
     energySpent: 0,
   };
+}
+
+function restoreContractQuestionHistory(
+  value: unknown,
+): Record<string, string[]> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return {};
+  }
+
+  return Object.fromEntries(
+    Object.entries(value).flatMap(([contractId, challengeIds]) =>
+      Array.isArray(challengeIds)
+        ? [
+            [
+              contractId,
+              challengeIds.filter(
+                (challengeId): challengeId is string =>
+                  typeof challengeId === "string",
+              ),
+            ],
+          ]
+        : [],
+    ),
+  );
 }
 
 function parseDateKey(dateKey: string): number {
@@ -113,6 +138,8 @@ function createInitialPlayer(): Player {
 
     lastDailyRewardDate: null,
     loginStreak: 0,
+
+    contractQuestionHistory: {},
   };
 }
 
@@ -232,6 +259,9 @@ function loadPlayer(): Player {
         typeof parsedPlayer.loginStreak === "number"
           ? parsedPlayer.loginStreak
           : 0,
+
+      contractQuestionHistory:
+        restoreContractQuestionHistory(parsedPlayer.contractQuestionHistory),
     };
 
     const currentTime = Date.now();
@@ -590,6 +620,35 @@ export function useGame() {
     return calculateEnergyCost(contract, bonuses);
   }
 
+  function startContract(contract: Contract): ContractChallenge {
+    const historyKey = String(contract.id);
+    const previousHistory = player.contractQuestionHistory[historyKey] ?? [];
+    const availableChallenges = contract.challenges.filter(
+      (challenge) => !previousHistory.includes(challenge.id),
+    );
+    const lastChallengeId = previousHistory.at(-1);
+    const nextChallenge =
+      availableChallenges[0] ??
+      contract.challenges.find(
+        (challenge) => challenge.id !== lastChallengeId,
+      ) ??
+      contract.challenges[0];
+    const nextHistory =
+      availableChallenges.length > 0
+        ? [...previousHistory, nextChallenge.id]
+        : [nextChallenge.id];
+
+    setPlayer((currentPlayer) => ({
+      ...currentPlayer,
+      contractQuestionHistory: {
+        ...currentPlayer.contractQuestionHistory,
+        [historyKey]: nextHistory,
+      },
+    }));
+
+    return nextChallenge;
+  }
+
   function resolveContract(contract: Contract, successful: boolean) {
     const currentPlayer = resetDailyStateIfNeeded(player);
 
@@ -868,6 +927,7 @@ export function useGame() {
     dailyResetSeconds,
 
     resolveContract,
+    startContract,
     getContractEnergyCost,
     purchaseUpgrade,
     unlockSkill,

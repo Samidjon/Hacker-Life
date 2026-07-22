@@ -1,8 +1,9 @@
 import { useState } from "react";
-import type { Contract } from "../types/game";
+import type { Contract, ContractChallenge } from "../types/game";
 
 interface ContractMissionProps {
   contract: Contract;
+  challenge: ContractChallenge;
   energyCost: number;
   onClose: () => void;
   onResolve: (successful: boolean) => void;
@@ -12,6 +13,7 @@ type MissionResult = "success" | "failure" | null;
 
 function ContractMission({
   contract,
+  challenge,
   energyCost,
   onClose,
   onResolve,
@@ -29,7 +31,7 @@ function ContractMission({
 
     const successful =
       selectedOption ===
-      contract.challenge.correctOptionIndex;
+      challenge.correctOptionIndex;
 
     setResult(successful ? "success" : "failure");
     onResolve(successful);
@@ -79,21 +81,21 @@ function ContractMission({
 
         <div className="mission-scenario">
           <span>INCIDENT REPORT</span>
-          <p>{contract.challenge.scenario}</p>
+          <p>{challenge.scenario}</p>
         </div>
 
         <div className="mission-question">
-          <h4>{contract.challenge.question}</h4>
+          <h4>{challenge.question}</h4>
 
           <div className="mission-options">
-            {contract.challenge.options.map(
+            {challenge.options.map(
               (option, index) => {
                 const isSelected =
                   selectedOption === index;
 
                 const isCorrect =
                   index ===
-                  contract.challenge.correctOptionIndex;
+                  challenge.correctOptionIndex;
 
                 let optionClass = "mission-option";
 
@@ -155,7 +157,7 @@ function ContractMission({
             </strong>
 
             <p>
-              {contract.challenge.explanation}
+              {challenge.explanation}
             </p>
           </div>
         )}

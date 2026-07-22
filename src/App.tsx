@@ -4,7 +4,7 @@ import { upgrades } from "./data/upgrades";
 import { useGame } from "./hooks/useGame";
 import { skills } from "./data/skills";
 import ContractMission from "./components/ContractMission";
-import type { Contract } from "./types/game";
+import type { Contract, ContractChallenge } from "./types/game";
 import { achievements } from "./data/achievements";
 import {
   getAchievementProgress,
@@ -20,6 +20,11 @@ type Page =
   | "skills"
   | "achievements"
   | "shop";
+
+interface ActiveContract {
+  contract: Contract;
+  challenge: ContractChallenge;
+}
 
 function formatCountdown(totalSeconds: number): string {
   const minutes = Math.floor(totalSeconds / 60);
@@ -44,7 +49,8 @@ function formatDailyCountdown(totalSeconds: number): string {
 function App() {
   const [activePage, setActivePage] = useState<Page>("dashboard");
 
-  const [activeContract, setActiveContract] = useState<Contract | null>(null);
+  const [activeContract, setActiveContract] =
+    useState<ActiveContract | null>(null);
   const {
     player,
     bonuses,
@@ -59,6 +65,7 @@ function App() {
     dailyResetSeconds,
 
     resolveContract,
+    startContract,
     getContractEnergyCost,
     purchaseUpgrade,
     unlockSkill,
@@ -500,7 +507,12 @@ function App() {
                     <button
                       className="primary-button"
                       disabled={isLocked || !hasEnoughEnergy}
-                      onClick={() => setActiveContract(contract)}
+                      onClick={() =>
+                        setActiveContract({
+                          contract,
+                          challenge: startContract(contract),
+                        })
+                      }
                     >
                       {isLocked
                         ? `Locked until level ${contract.requiredLevel}`
@@ -1172,11 +1184,12 @@ function App() {
         )}
         {activeContract && (
           <ContractMission
-            contract={activeContract}
-            energyCost={getContractEnergyCost(activeContract)}
+            contract={activeContract.contract}
+            challenge={activeContract.challenge}
+            energyCost={getContractEnergyCost(activeContract.contract)}
             onClose={() => setActiveContract(null)}
             onResolve={(successful) =>
-              resolveContract(activeContract, successful)
+              resolveContract(activeContract.contract, successful)
             }
           />
         )}
